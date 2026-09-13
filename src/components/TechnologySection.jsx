@@ -3,17 +3,29 @@ import { toast } from "react-toastify";
 
 import TechnologyCard from "./TechnologyCard";
 import StackPanel from "./StackPanel";
+import LoadingSpinner from "./LoadingSpinner";
 
 function TechnologySection() {
   const [technologies, setTechnologies] = useState([]);
   const [selectedTech, setSelectedTech] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/technologies.json")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to load technologies");
+        }
+
+        return res.json();
+      })
       .then((data) => {
         setTechnologies(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Something went wrong while loading technologies.");
         setLoading(false);
       });
   }, []);
@@ -29,6 +41,7 @@ function TechnologySection() {
     }
 
     setSelectedTech([...selectedTech, technology]);
+
     toast.success(`${technology.name} added to your stack`);
   };
 
@@ -54,12 +67,14 @@ function TechnologySection() {
   };
 
   if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-sm text-slate-500">
-          Loading technologies...
-        </p>
-      </div>
+      <p className="py-20 text-center text-sm text-red-500">
+        {error}
+      </p>
     );
   }
 
